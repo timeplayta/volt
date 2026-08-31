@@ -322,6 +322,7 @@
         this.master.gain.value = 0;
         this.master.connect(this.ctx.destination);
         this.applyVolume();
+        this.startMusic();
       }
       if (this.ctx.state === "suspended") this.ctx.resume();
     },
@@ -333,6 +334,8 @@
       if (this.master && this.ctx) {
         this.master.gain.setTargetAtTime(gain, this.ctx.currentTime, 0.04);
       }
+      if (gain > 0) this.startMusic();
+      else this.muteMusic();
     },
 
     tone({ freq = 440, dur = 0.12, type = "square", vol = 0.45, attack = 0.008, slide = 0, delay = 0 }) {
@@ -433,7 +436,108 @@
         osc2.start();
         this.humNodes = { osc, osc2, gain };
       }
-      this.humNodes.gain.gain.setTargetAtTime(0.07 + amount * 0.16, this.ctx.currentTime, 0.08);
+      this.humNodes.gain.gain.setTargetAtTime(0.03 + amount * 0.08, this.ctx.currentTime, 0.08);
+    },
+
+    musicMood: "menu",
+    music: null,
+    musicTimer: 0,
+
+    setMusicMood(mood) {
+      this.musicMood = mood === "play" ? "play" : "menu";
+      if (this.music && this.music.filter && this.ctx) {
+        const hz = this.musicMood === "play" ? 1600 : 1100;
+        this.music.filter.frequency.setTargetAtTime(hz, this.ctx.currentTime, 0.25);
+      }
+    },
+
+    muteMusic() {
+      if (this.musicTimer) cancelAnimationFrame(this.musicTimer);
+      this.musicTimer = 0;
+      if (this.music && this.ctx) {
+        this.music.bus.gain.setTargetAtTime(0, this.ctx.currentTime, 0.08);
+      }
+    },
+
+    startMusic() {
+      if (!this.ctx || this.muted || Number(state.save.volume) <= 0) return;
+      if (!this.music) {
+        const bus = this.ctx.createGain();
+        bus.gain.value = 0;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 1100;
+        filter.Q.value = 0.6;
+        bus.connect(filter);
+        filter.connect(this.master);
+
+        const bass = this.ctx.createOscillator();
+        const bassG = this.ctx.createGain();
+        bass.type = "sine";
+        bass.frequency.value = 55;
+        bassG.gain.value = 0.2;
+        bass.connect(bassG);
+        bassG.connect(bus);
+
+        const pad = this.ctx.createOscillator();
+        const pad2 = this.ctx.createOscillator();
+        const padG = this.ctx.createGain();
+        pad.type = "triangle";
+        pad2.type = "sine";
+        pad.frequency.value = 110;
+        pad2.frequency.value = 110.35;
+        padG.gain.value = 0.07;
+        pad.connect(padG);
+        pad2.connect(padG);
+        padG.connect(bus);
+
+        const arp = this.ctx.createOscillator();
+        const arpG = this.ctx.createGain();
+        arp.type = "square";
+        arp.frequency.value = 220;
+        arpG.gain.value = 0.0001;
+        arp.connect(arpG);
+        arpG.connect(filter);
+
+        bass.start();
+        pad.start();
+        pad2.start();
+        arp.start();
+        this.music = { bus, filter, bass, arp, arpG, step: 0, next: this.ctx.currentTime + 0.04 };
+      }
+      this.music.bus.gain.setTargetAtTime(0.62, this.ctx.currentTime, 0.35);
+      if (!this.musicTimer) this.pumpMusic();
+    },
+
+    pumpMusic() {
+      if (!this.music || !this.ctx || this.muted) {
+        this.musicTimer = 0;
+        return;
+      }
+      const play = this.musicMood === "play";
+      const seq = play
+        ? [220, 261.63, 329.63, 392, 329.63, 261.63, 246.94, 220]
+        : [220, 0, 261.63, 0, 329.63, 261.63, 0, 196];
+      const stepDur = play ? 0.3 : 0.42;
+      const now = this.ctx.currentTime;
+      while (this.music.next < now + 0.28) {
+        const t = this.music.next;
+        const note = seq[this.music.step % seq.length];
+        if (note) {
+          this.music.arp.frequency.setValueAtTime(note, t);
+          const g = this.music.arpG.gain;
+          g.cancelScheduledValues(t);
+          g.setValueAtTime(0.0001, t);
+          g.exponentialRampToValueAtTime(play ? 0.05 : 0.036, t + 0.018);
+          g.exponentialRampToValueAtTime(0.0001, t + stepDur * 0.82);
+        }
+        if (this.music.step % 8 === 0) {
+          this.music.bass.frequency.setTargetAtTime(this.music.step % 16 === 0 ? 55 : 73.42, t, 0.1);
+        }
+        this.music.step += 1;
+        this.music.next += stepDur;
+      }
+      this.musicTimer = requestAnimationFrame(() => this.pumpMusic());
     },
   };
 
@@ -515,6 +619,7 @@
       el.classList.toggle("active", key === name);
     });
     if (name === "menu") refreshMenu();
+    AudioFx.setMusicMood(name === "play" ? "play" : "menu");
   }
 
   function totalStars() {

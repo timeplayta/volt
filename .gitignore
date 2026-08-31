@@ -4,3 +4,4 @@ desktop.ini
 .env
 .env.*
 node_modules/
+.netlify
