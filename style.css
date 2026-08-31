@@ -179,6 +179,8 @@ h1 {
   font-size: 13px;
 }
 
+.hint-audio.hidden { display: none; }
+
 .topbar, .play-bar {
   display: flex;
   align-items: center;
@@ -573,6 +575,15 @@ h1 {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+.win-card.finale {
+  border-color: rgba(245, 197, 24, 0.45);
+  box-shadow: 0 0 40px rgba(245, 197, 24, 0.22);
+}
+
+.win-card.finale h2 {
+  font-size: 40px;
 }
 
 .win-stars {

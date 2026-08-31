@@ -160,6 +160,7 @@
       w: 5, h: 5, cells: "..........S....TIITELEEL.",
       solved: [0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,1,1,3,0,3,1,3,0],
       scramble: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,1,0,1,1,0], par: 7,
+      tip: "O tabuleiro cresceu. Mesma regra: fecha o caminho até as lâmpadas.",
     },
     {
       name: "Watt",
@@ -190,6 +191,7 @@
       w: 5, h: 5, cells: "....E...LL...IE..LXT..EES",
       solved: [0,0,0,0,2,0,0,0,1,3,0,0,0,0,2,0,0,1,0,2,0,0,0,0,0],
       scramble: [0,0,0,0,1,0,0,0,1,1,0,0,0,1,1,0,0,1,0,0,0,0,0,1,0], par: 7,
+      tip: "A cruz é um cruzamento. Ela não gira — trabalha em volta.",
     },
     {
       name: "Anodo",
@@ -304,6 +306,7 @@
       w: 5, h: 5, cells: "LE...IE...TTIEEISILILIITL",
       solved: [1,3,0,0,0,0,2,0,0,0,0,3,1,3,2,0,1,1,2,0,0,1,1,3,3],
       scramble: [1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1], par: 18,
+      tip: "Última fase. Fecha a rede inteira.",
     }
   ];
 
@@ -522,10 +525,14 @@
     const got = totalStars();
     const max = LEVELS.length * 3;
     const perfects = (state.save.stars || []).filter((n) => n === 3).length;
-    els.menuProgress.textContent = `${got} / ${max} estrelas · ${perfects} perfeitos`;
+    const cleared = LEVELS.every((_, i) => (state.save.stars[i] || 0) > 0);
+    els.menuProgress.textContent = cleared
+      ? `${got} / ${max} estrelas · você zerou`
+      : `${got} / ${max} estrelas · ${perfects} perfeitos`;
     const next = nextPlayable();
     const play = document.getElementById("btn-play");
-    play.textContent = got > 0 ? `Continuar · ${LEVELS[next].name}` : "Jogar tutorial";
+    if (cleared) play.textContent = "Jogar de novo";
+    else play.textContent = got > 0 ? `Continuar · ${LEVELS[next].name}` : "Jogar tutorial";
   }
 
   function syncUnlock() {
@@ -1045,7 +1052,14 @@
     persist();
     AudioFx.setHum(0.45);
     const card = els.win.querySelector(".win-card");
-    if (stars >= 3) {
+    const last = state.level >= LEVELS.length - 1;
+    card.classList.toggle("finale", last);
+    if (last) {
+      els.winKicker.textContent = "rede completa";
+      els.winTitle.textContent = "ZERADO!";
+      card.classList.toggle("perfect", stars >= 3);
+      AudioFx.perfect();
+    } else if (stars >= 3) {
       els.winKicker.textContent = state.level === 2 ? "tutorial fechado" : state.level <= 1 ? `lição ${state.level + 1}` : "sem desperdício";
       els.winTitle.textContent = "PERFEITO!";
       card.classList.add("perfect");
@@ -1056,16 +1070,20 @@
       card.classList.remove("perfect");
       AudioFx.win();
     }
-    burst(innerWidth / 2, innerHeight * 0.42, stars >= 3 ? 90 : 55);
+    burst(innerWidth / 2, innerHeight * 0.42, last ? 120 : stars >= 3 ? 90 : 55);
     document.getElementById("app").classList.remove("shake");
     void document.getElementById("app").offsetWidth;
     document.getElementById("app").classList.add("shake");
     els.winStars.textContent = starText(stars);
     const lesson = ["Gira a peça. A corrente segue o cano.", "A L vira a energia na quina.", "Os canos só passam corrente se se tocarem."];
-    els.winSub.textContent = isTutorialLevel()
-      ? lesson[state.level]
-      : `${state.moves} giro${state.moves === 1 ? "" : "s"} · meta ${state.par}`;
-    els.btnNext.textContent = state.level >= LEVELS.length - 1 ? "Ver níveis" : "Próximo";
+    if (last) {
+      els.winSub.textContent = "50 fases. A cidade tem luz.";
+    } else if (isTutorialLevel()) {
+      els.winSub.textContent = lesson[state.level];
+    } else {
+      els.winSub.textContent = `${state.moves} giro${state.moves === 1 ? "" : "s"} · meta ${state.par}`;
+    }
+    els.btnNext.textContent = last ? "Ver níveis" : "Próximo";
     setTimeout(() => els.win.classList.remove("hidden"), 280);
   }
 
@@ -1180,10 +1198,16 @@
     LEVELS.forEach((level, i) => {
       const info = analyze(level, level.solved);
       if (!info.solved) console.error("Nível quebrado (solved):", i + 1, level.name, info);
+      const need = (level.scramble || []).reduce((sum, n) => sum + (n ? 1 : 0), 0);
+      if (need !== level.par) console.warn("Par diferente do scramble:", i + 1, level.name, need, level.par);
     });
   }
 
-  document.body.addEventListener("pointerdown", () => AudioFx.unlock(), { once: false });
+  document.body.addEventListener("pointerdown", () => {
+    AudioFx.unlock();
+    const hint = document.querySelector(".hint-audio");
+    if (hint) hint.classList.add("hidden");
+  }, { once: false });
 
   document.getElementById("btn-play").addEventListener("click", () => {
     AudioFx.unlock();
