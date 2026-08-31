@@ -2,6 +2,21 @@
   publish = "."
 
 [[headers]]
-  for = "/*"
+  for = "/"
   [headers.values]
     Cache-Control = "public, max-age=60"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

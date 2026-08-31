@@ -518,7 +518,7 @@
       const seq = play
         ? [220, 261.63, 329.63, 392, 329.63, 261.63, 246.94, 220]
         : [220, 0, 261.63, 0, 329.63, 261.63, 0, 196];
-      const stepDur = play ? 0.3 : 0.42;
+      const stepDur = play ? 0.22 : 0.36;
       const now = this.ctx.currentTime;
       while (this.music.next < now + 0.28) {
         const t = this.music.next;
@@ -856,7 +856,7 @@
         if (type === "S") btn.classList.add("source");
         if (type === "E") btn.classList.add("sink");
         if (info.powered[i]) btn.classList.add("powered");
-        btn.style.transitionDelay = `${(info.dist[i] || 0) * 40}ms`;
+        btn.style.transitionDelay = `${(info.dist[i] || 0) * 16}ms`;
         btn.setAttribute("aria-label", type === "S" ? "Bateria" : type === "E" ? "Lâmpada" : type === "X" ? "Cruzamento" : "Cano");
         btn.innerHTML = svgTile(type, maskAt(level, state.rots, i), info.powered[i]);
         if (type !== "X") bindTile(btn, i);
@@ -1202,7 +1202,7 @@
     setTimeout(() => {
       els.win.classList.remove("hidden");
       syncFab();
-    }, 280);
+    }, 80);
   }
 
   function openLevel(index) {
