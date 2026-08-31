@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#070B14" />
+  <meta name="description" content="VOLT — gire as peças, conecte a energia, acenda as lâmpadas." />
+  <meta property="og:title" content="VOLT" />
+  <meta property="og:description" content="Gire. Conecte. Ilumine. Um puzzle elétrico rápido." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <title>VOLT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <div class="grain" aria-hidden="true"></div>
+    <canvas id="fx" aria-hidden="true"></canvas>
+    <button class="icon-btn settings-fab" id="btn-settings" aria-label="Configurações">⚙</button>
+
+    <section id="screen-menu" class="screen active">
+      <div class="brand">
+        <p class="eyebrow">puzzle elétrico</p>
+        <h1>VOLT</h1>
+        <p class="tagline">Gire. Conecte. Ilumine.</p>
+        <p class="menu-progress" id="menu-progress">0 / 150 estrelas</p>
+      </div>
+      <div class="menu-actions">
+        <button class="btn btn-primary" id="btn-play">Jogar</button>
+        <button class="btn btn-ghost" id="btn-levels">Níveis</button>
+        <button class="btn btn-ghost" id="btn-how">Como jogar</button>
+      </div>
+      <p class="hint-audio">Toque em qualquer lugar pra ligar o som</p>
+    </section>
+
+    <section id="screen-how" class="screen">
+      <header class="topbar">
+        <button class="icon-btn" id="how-back" aria-label="Voltar">←</button>
+        <h2>Como jogar</h2>
+        <span class="spacer"></span>
+      </header>
+      <div class="how-list">
+        <article class="how-card">
+          <div class="how-num">1</div>
+          <div>
+            <h3>Nível 1 — girar</h3>
+            <p>Clica no cano (ou usa ↶ ↷). Esquerdo / A gira pra esquerda. Direito / D gira pra direita. A corrente segue o cano.</p>
+          </div>
+        </article>
+        <article class="how-card">
+          <div class="how-num">2</div>
+          <div>
+            <h3>Nível 2 — a curva</h3>
+            <p>A peça em L vira a energia. A bateria amarela é a fonte. A lâmpada só acende se o cano encostar nela.</p>
+          </div>
+        </article>
+        <article class="how-card">
+          <div class="how-num">3</div>
+          <div>
+            <h3>Nível 3 — o caminho</h3>
+            <p>A corrente só passa se os dois lados se tocarem. Fecha o fio até a lâmpada acender.</p>
+          </div>
+        </article>
+        <article class="how-card">
+          <div class="how-num">★</div>
+          <div>
+            <h3>Depois disso, vale estrela</h3>
+            <p>Fecha na meta de giros pra ganhar 3 estrelas. Tem desfazer e reiniciar.</p>
+          </div>
+        </article>
+      </div>
+      <button class="btn btn-primary" id="how-play">Jogar o tutorial</button>
+    </section>
+
+    <section id="screen-levels" class="screen">
+      <header class="topbar">
+        <button class="icon-btn" id="levels-back" aria-label="Voltar">←</button>
+        <h2>Níveis</h2>
+        <span class="spacer"></span>
+      </header>
+      <div id="level-grid" class="level-grid"></div>
+    </section>
+
+    <section id="screen-play" class="screen">
+      <header class="play-bar">
+        <button class="icon-btn" id="play-menu" aria-label="Menu">☰</button>
+        <div class="play-meta">
+          <p class="lvl-label" id="lvl-label">Nível 1</p>
+          <p class="lvl-name" id="lvl-name">Primeiro choque</p>
+        </div>
+        <span class="spacer"></span>
+      </header>
+
+      <div class="stats">
+        <div class="stat">
+          <span>Giros</span>
+          <strong id="stat-moves">0</strong>
+        </div>
+        <div class="stat">
+          <span>Meta</span>
+          <strong id="stat-par">3</strong>
+        </div>
+        <div class="stat stars-stat" id="live-stars">★★★</div>
+      </div>
+
+      <div id="coach" class="coach hidden"></div>
+      <div id="board-wrap" class="board-wrap">
+        <div id="board" class="board"></div>
+      </div>
+
+      <footer class="play-actions">
+        <div class="rotate-row">
+          <button class="btn btn-chip" id="btn-rot-left" aria-label="Girar esquerda">↶ Esquerda</button>
+          <button class="btn btn-chip" id="btn-rot-right" aria-label="Girar direita">Direita ↷</button>
+        </div>
+        <div class="edit-row">
+          <button class="btn btn-chip" id="btn-undo">Desfazer</button>
+          <button class="btn btn-chip" id="btn-reset">Reiniciar</button>
+        </div>
+      </footer>
+    </section>
+
+    <div id="settings" class="overlay hidden">
+      <div class="win-card settings-card">
+        <p class="win-kicker">ajustes</p>
+        <h2>Som</h2>
+        <div class="set-row">
+          <span>Som do jogo</span>
+          <button class="btn btn-chip set-toggle" id="set-sound" type="button">Ligado</button>
+        </div>
+        <label class="set-vol" for="vol-slider">
+          Volume <strong id="vol-num">80</strong>
+        </label>
+        <input id="vol-slider" type="range" min="0" max="100" value="80" />
+        <button class="btn btn-primary" id="set-close" type="button">Fechar</button>
+      </div>
+    </div>
+
+    <div id="win" class="overlay hidden">
+      <div class="win-card">
+        <p class="win-kicker" id="win-kicker">circuito fechado</p>
+        <h2 id="win-title">LIGADO!</h2>
+        <p class="win-stars" id="win-stars">★★★</p>
+        <p class="win-sub" id="win-sub">3 giros · meta 3</p>
+        <div class="win-actions">
+          <button class="btn btn-primary" id="btn-next">Próximo</button>
+          <button class="btn btn-ghost" id="btn-win-menu">Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
