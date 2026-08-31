@@ -886,14 +886,24 @@
     els.volNum.textContent = String(vol);
   }
 
+  function overlayOpen() {
+    return !els.settings.classList.contains("hidden") || !els.win.classList.contains("hidden");
+  }
+
+  function syncFab() {
+    document.getElementById("btn-settings").classList.toggle("tucked", overlayOpen());
+  }
+
   function openSettings() {
     AudioFx.unlock();
     syncSettingsUi();
     els.settings.classList.remove("hidden");
+    syncFab();
   }
 
   function closeSettings() {
     els.settings.classList.add("hidden");
+    syncFab();
   }
 
   function restoreHum() {
@@ -1084,7 +1094,10 @@
       els.winSub.textContent = `${state.moves} giro${state.moves === 1 ? "" : "s"} · meta ${state.par}`;
     }
     els.btnNext.textContent = last ? "Ver níveis" : "Próximo";
-    setTimeout(() => els.win.classList.remove("hidden"), 280);
+    setTimeout(() => {
+      els.win.classList.remove("hidden");
+      syncFab();
+    }, 280);
   }
 
   function openLevel(index) {
@@ -1100,6 +1113,7 @@
     const hint = tutorialHintIndex();
     state.selected = hint >= 0 ? hint : firstRotatable();
     els.win.classList.add("hidden");
+    syncFab();
     show("play");
     els.liveStars.dataset.stars = "3";
     renderBoard();
@@ -1256,6 +1270,7 @@
   document.getElementById("play-menu").addEventListener("click", () => {
     AudioFx.ui();
     els.win.classList.add("hidden");
+    syncFab();
     show("menu");
   });
 
@@ -1322,6 +1337,7 @@
     AudioFx.ui();
     if (state.level >= LEVELS.length - 1) {
       els.win.classList.add("hidden");
+      syncFab();
       renderLevels();
       show("levels");
       return;
@@ -1332,6 +1348,7 @@
   document.getElementById("btn-win-menu").addEventListener("click", () => {
     AudioFx.ui();
     els.win.classList.add("hidden");
+    syncFab();
     show("menu");
   });
 
